@@ -395,11 +395,11 @@ export default {
           if (firstPicture) {
             firstPicture = false;
             return {
-              html: `<video class="pswp__video" autoplay controls playsinline poster="${imgSrc}" preload="auto"><source src="${videoSrc}" /></video>`,
+              html: this.createVideoElement(videoSrc, imgSrc, true),
             };
           } else {
             return {
-              html: `<video class="pswp__video" controls playsinline poster="${imgSrc}" preload="metadata"><source src="${videoSrc}" /></video>`,
+              html: this.createVideoElement(videoSrc, imgSrc, false),
             };
           }
         }
@@ -425,6 +425,32 @@ export default {
 
       // Publish event to be consumed by other components.
       this.$event.publish("viewer.opened");
+    },
+    // Creates a secure video element with the specified source and poster image.
+    createVideoElement(videoSrc, posterSrc, autoplay = false) {
+      // Create a new video element
+      const video = document.createElement("video");
+
+      // Set essential attributes
+      video.className = "pswp__video";
+      video.controls = true;
+      video.playsinline = true;
+      video.poster = posterSrc;
+      video.preload = autoplay ? "auto" : "metadata";
+      video.muted = autoplay; // Mute only if autoplay is true
+
+      // Set autoplay only for the first video if requested
+      if (autoplay) {
+        video.autoplay = true;
+      }
+
+      // Create and append source element
+      const source = document.createElement("source");
+      source.src = videoSrc;
+      video.appendChild(source);
+
+      // Convert the element to HTML string for PhotoSwipe
+      return video.outerHTML;
     },
     // Destroys the PhotoSwipe lightbox instance after use, see onClose().
     destroyLightbox() {
