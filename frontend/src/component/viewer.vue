@@ -359,19 +359,17 @@ export default {
         // Get the current slide model data.
         const model = this.models[i];
 
-        // Get the screen (window) resolution in real pixels,
-        // depending on the width/height and pixel density.
+        // Get the screen (window) resolution in real pixels
         const pixels = this.getWindowPixels();
 
         // Get the right thumbnail size based on the screen resolution in pixels.
-        const s = Util.thumbSize(pixels.width, pixels.height);
+        const thumbSize = Util.thumbSize(pixels.width, pixels.height);
 
         // Get thumbnail image URL.
-        const imgSrc = model.Thumbs[s].src;
+        const imgSrc = model.Thumbs[thumbSize].src;
 
-        // Render videos and animations as custom HTML.
+        // Check if playable (video)
         if (model.Playable) {
-          const videoSrc = Util.videoUrl(model.Hash);
           /*
             TODO: (a) Check if there is a more convenient and/or secure way to render the video slide, then perform
                       security tests to ensure that no code can be injected, e.g. create an HTMLVideoElement object,
@@ -392,29 +390,48 @@ export default {
                       used as a poster (the current thumbnail is taken later for longer videos, since the first frame is
                       often black).
           */
-          if (firstPicture) {
-            firstPicture = false;
-            return {
-              html: this.createVideoElement(videoSrc, imgSrc, true),
-            };
-          } else {
-            return {
-              html: this.createVideoElement(videoSrc, imgSrc, false),
-            };
+          return {
+            type: "html",
+            html: `<div style="width: 100%; height: 100%;">Loading...</div>`,
+            w: window.innerWidth, // Use window width for video
+            h: window.innerHeight, // Use window height for video
+            msrc: imgSrc,
+          };
+        }
+
+        // Return the data that PhotoSwipe needs to show the image
+        return {
+          src: imgSrc,
+          width: model.Thumbs[thumbSize].w,
+          height: model.Thumbs[thumbSize].h,
+        };
+      });
+
+      lightbox.on("contentLoad", async (e) => {
+        const { content, isLazy } = e;
+        if (content.data.type === "html") {
+          // This is a video
+          const index = content.index;
+          const model = this.models[index];
+          const posterSrc = content.data.msrc;
+          try {
+            const props = await this.getVideoProperties(model);
+            const videoSrc = Util.videoUrl(model.Hash);
+
+            // Create video element using the simplified function
+            const videoHtml = this.createVideoElement(videoSrc, posterSrc, props.autoplay, props.loop);
+
+            // Replace loading placeholder
+            content.element.innerHTML = videoHtml;
+
+            if (!isLazy) {
+              content.element.style.display = "block";
+            }
+          } catch (err) {
+            console.warn("Failed to load video:", err);
+            content.element.innerHTML = '<div class="pswp__error-msg">Failed to load video</div>';
           }
         }
-
-        if (firstPicture) {
-          firstPicture = false;
-        }
-
-        // Return the data that PhotoSwipe needs to show the image,
-        // see https://photoswipe.com/data-sources/#dynamically-generated-data.
-        return {
-          src: imgSrc, // Thumbnail image URL.
-          width: model.Thumbs[s].w, // Actual thumbnail image width (x).
-          height: model.Thumbs[s].h, // Actual thumbnail image height (y).
-        };
       });
 
       // Init PhotoSwipe.
@@ -426,18 +443,50 @@ export default {
       // Publish event to be consumed by other components.
       this.$event.publish("viewer.opened");
     },
-    // Creates a secure video element with the specified source and poster image.
-    createVideoElement(videoSrc, posterSrc, autoplay = false) {
-      // Create a new video element
+
+    getVideoProperties(model) {
+      return new Promise((resolve) => {
+        Api.get(`photos/${model.UID}`)
+          .then((response) => {
+            const photo = new Photo(response.data);
+
+            // Get video file
+            const file = photo.videoFile();
+
+            // Check if it's a short video (less than 5 seconds)
+            const duration = file?.Duration ? file.Duration / 1000000 : 0;
+            const isShortVideo = duration > 0 && duration <= 5000;
+
+            // Determine loop and autoplay based on type
+            const result = {
+              loop: photo.Type === "animated" || photo.Type === "live" || isShortVideo,
+              autoplay: photo.Type === "animated" || photo.Type === "live",
+            };
+
+            resolve(result);
+          })
+          .catch(() => {
+            resolve({
+              loop: false,
+              autoplay: false,
+            });
+          });
+      });
+    },
+
+    createVideoElement(videoSrc, posterSrc, autoplay = false, shouldLoop = false) {
+      // Create video element
       const video = document.createElement("video");
 
       // Set essential attributes
       video.className = "pswp__video";
       video.controls = true;
-      video.playsinline = true;
+      video.playsInline = true;
+      video.style.cssText = "position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: contain; background: black;";
       video.poster = posterSrc;
       video.preload = autoplay ? "auto" : "metadata";
-      video.muted = autoplay; // Mute only if autoplay is true
+      video.muted = autoplay;
+      video.loop = shouldLoop;
 
       // Set autoplay only for the first video if requested
       if (autoplay) {
@@ -447,6 +496,7 @@ export default {
       // Create and append source element
       const source = document.createElement("source");
       source.src = videoSrc;
+      source.type = "video/mp4";
       video.appendChild(source);
 
       // Convert the element to HTML string for PhotoSwipe
