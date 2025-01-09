@@ -57,7 +57,7 @@ import PhotoSwipeDynamicCaption from "photoswipe-dynamic-caption-plugin";
 import Util from "common/util";
 import Api from "common/api";
 import Thumb from "model/thumb";
-import { Photo } from "model/photo";
+import { Photo, MediaAnimated, MediaLive } from "model/photo";
 
 /*
   TODO: All previously available features and controls must be preserved in the new hybrid photo/video viewer:
@@ -262,7 +262,6 @@ export default {
 
       // Create PhotoSwipe instance.
       let lightbox = new Lightbox(options);
-      let firstPicture = true;
 
       // Keep reference to PhotoSwipe instance.
       this.lightbox = lightbox;
@@ -420,6 +419,7 @@ export default {
         }
 
         // Return the data that PhotoSwipe needs to show the image
+        // see https://photoswipe.com/data-sources/#dynamically-generated-data.
         return {
           src: imgSrc,
           width: model.Thumbs[thumbSize].w,
@@ -430,13 +430,12 @@ export default {
       lightbox.on("contentLoad", async (e) => {
         const { content, isLazy } = e;
         if (content.data.type === "html") {
-          // This is a video
           const index = content.index;
           const model = this.models[index];
           const posterSrc = content.data.msrc;
           try {
             const props = await this.getVideoProperties(model);
-            const videoSrc = Util.videoUrl(model.Hash);
+            const videoSrc = Util.videoUrl(props.file.Hash, props.file.Codec);
 
             // Create video element using the simplified function
             const videoHtml = this.createVideoElement(videoSrc, posterSrc, props.autoplay, props.loop);
@@ -448,7 +447,6 @@ export default {
               content.element.style.display = "block";
             }
           } catch (err) {
-            console.warn("Failed to load video:", err);
             content.element.innerHTML = '<div class="pswp__error-msg">Failed to load video</div>';
           }
         }
@@ -470,25 +468,33 @@ export default {
           .then((response) => {
             const photo = new Photo(response.data);
 
-            // Get video file
+            // Get video file using Photo class's logic
             const file = photo.videoFile();
 
             // Check if it's a short video (less than 5 seconds)
             const duration = file?.Duration ? file.Duration / 1000000 : 0;
             const isShortVideo = duration > 0 && duration <= 5000;
 
+            // Check media type once
+            const isSpecialType = photo.Type === MediaAnimated || photo.Type === MediaLive;
+
             // Determine loop and autoplay based on type
             const result = {
-              loop: photo.Type === "animated" || photo.Type === "live" || isShortVideo,
-              autoplay: photo.Type === "animated" || photo.Type === "live",
+              loop: isSpecialType || isShortVideo,
+              autoplay: isSpecialType,
+              file: file,
+              photo: photo,
             };
 
             resolve(result);
           })
           .catch(() => {
+            console.warn("Failed to fetch photo data for model UID:", model.UID);
             resolve({
               loop: false,
               autoplay: false,
+              file: null,
+              photo: null,
             });
           });
       });
@@ -516,7 +522,7 @@ export default {
       // Create and append source element
       const source = document.createElement("source");
       source.src = videoSrc;
-      source.type = "video/mp4";
+
       video.appendChild(source);
 
       // Convert the element to HTML string for PhotoSwipe
