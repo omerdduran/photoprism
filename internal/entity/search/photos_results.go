@@ -43,7 +43,7 @@ type Photo struct {
 	PhotoFaces       int           `json:"Faces,omitempty" select:"photos.photo_faces"`
 	PhotoQuality     int           `json:"Quality" select:"photos.photo_quality"`
 	PhotoResolution  int           `json:"Resolution" select:"photos.photo_resolution"`
-	PhotoDuration    time.Duration `json:"Duration,omitempty" yaml:"photos.photo_duration"`
+	PhotoDuration    time.Duration `json:"Duration,omitempty" select:"photos.photo_duration"`
 	PhotoColor       int16         `json:"Color" select:"photos.photo_color"`
 	PhotoScan        bool          `json:"Scan" select:"photos.photo_scan"`
 	PhotoPanorama    bool          `json:"Panorama" select:"photos.photo_panorama"`
@@ -191,6 +191,31 @@ func (m *Photo) IsPlayable() bool {
 	default:
 		return false
 	}
+}
+
+// MediaInfo returns the media file hash and codec depending on the media type.
+func (m *Photo) MediaInfo() (mediaHash, mediaCodec string) {
+	if m.PhotoType == entity.MediaVideo || m.PhotoType == entity.MediaLive {
+		for _, f := range m.Files {
+			if f.FileVideo && f.FileHash != "" {
+				return f.FileHash, f.FileCodec
+			}
+		}
+	} else if m.PhotoType == entity.MediaVector {
+		for _, f := range m.Files {
+			if f.MediaType == entity.MediaVector && f.FileHash != "" {
+				return f.FileHash, f.FileCodec
+			}
+		}
+	} else if m.PhotoType == entity.MediaDocument {
+		for _, f := range m.Files {
+			if f.MediaType == entity.MediaDocument && f.FileHash != "" {
+				return f.FileHash, f.FileCodec
+			}
+		}
+	}
+
+	return m.FileHash, ""
 }
 
 // ShareBase returns a meaningful file name for sharing.
