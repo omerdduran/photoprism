@@ -411,10 +411,9 @@ export default {
           */
           return {
             type: "html",
-            html: `<div style="width: 100%; height: 100%;">Loading...</div>`,
-            w: window.innerWidth, // Use window width for video
-            h: window.innerHeight, // Use window height for video
-            msrc: imgSrc,
+            html: `<div class="pswp__error-msg">Loading video...</div>`,
+            model: model, // Pass the entire model data
+            msrc: imgSrc, // Pass the thumbnail image URL
           };
         }
 
@@ -427,25 +426,27 @@ export default {
         };
       });
 
-      lightbox.on("contentLoad", async (e) => {
-        const { content, isLazy } = e;
+      lightbox.on("contentLoad", (e) => {
+        const { content } = e;
         if (content.data.type === "html") {
-          const index = content.index;
-          const model = this.models[index];
+          // Prevent default loading behavior
+          e.preventDefault();
+
+          const model = content.data.model;
           const posterSrc = content.data.msrc;
+
           try {
-            const props = await this.getVideoProperties(model);
-            const videoSrc = Util.videoUrl(props.file.Hash, props.file.Codec);
+            const duration = model.Duration ? model.Duration / 1000000 : 0;
+            const isShortVideo = duration > 0 && duration <= 5000;
+            const isSpecialType = model.Type === MediaAnimated || model.Type === MediaLive;
+            const videoSrc = Util.videoUrl(model.Hash, model.Codec || "avc");
 
-            // Create video element using the simplified function
-            const videoHtml = this.createVideoElement(videoSrc, posterSrc, props.autoplay, props.loop);
+            // Create video element
+            const videoElement = this.createVideoElement(videoSrc, posterSrc, isSpecialType, isSpecialType || isShortVideo);
 
-            // Replace loading placeholder
-            content.element.innerHTML = videoHtml;
-
-            if (!isLazy) {
-              content.element.style.display = "block";
-            }
+            content.element = videoElement;
+            content.state = "loading";
+            content.onLoaded();
           } catch (err) {
             content.element.innerHTML = '<div class="pswp__error-msg">Failed to load video</div>';
           }
@@ -462,44 +463,6 @@ export default {
       this.$event.publish("viewer.opened");
     },
 
-    getVideoProperties(model) {
-      return new Promise((resolve) => {
-        Api.get(`photos/${model.UID}`)
-          .then((response) => {
-            const photo = new Photo(response.data);
-
-            // Get video file using Photo class's logic
-            const file = photo.videoFile();
-
-            // Check if it's a short video (less than 5 seconds)
-            const duration = file?.Duration ? file.Duration / 1000000 : 0;
-            const isShortVideo = duration > 0 && duration <= 5000;
-
-            // Check media type once
-            const isSpecialType = photo.Type === MediaAnimated || photo.Type === MediaLive;
-
-            // Determine loop and autoplay based on type
-            const result = {
-              loop: isSpecialType || isShortVideo,
-              autoplay: isSpecialType,
-              file: file,
-              photo: photo,
-            };
-
-            resolve(result);
-          })
-          .catch(() => {
-            console.warn("Failed to fetch photo data for model UID:", model.UID);
-            resolve({
-              loop: false,
-              autoplay: false,
-              file: null,
-              photo: null,
-            });
-          });
-      });
-    },
-
     createVideoElement(videoSrc, posterSrc, autoplay = false, shouldLoop = false) {
       // Create video element
       const video = document.createElement("video");
@@ -508,7 +471,6 @@ export default {
       video.className = "pswp__video";
       video.controls = true;
       video.playsInline = true;
-      video.style.cssText = "position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: contain; background: black;";
       video.poster = posterSrc;
       video.preload = autoplay ? "auto" : "metadata";
       video.muted = autoplay;
@@ -525,8 +487,8 @@ export default {
 
       video.appendChild(source);
 
-      // Convert the element to HTML string for PhotoSwipe
-      return video.outerHTML;
+      // Return the DOM element
+      return video;
     },
     // Destroys the PhotoSwipe lightbox instance after use, see onClose().
     destroyLightbox() {
