@@ -378,6 +378,13 @@ export default {
           ) {
             this.playVideo(content.element, content.data?.loop);
           }
+          
+          // Focus on video element to enable keyboard controls
+          if (content.element instanceof HTMLVideoElement) {
+            setTimeout(() => {
+              content.element.focus({preventScroll: true});
+            }, 100);
+          }
         }
 
         // Flag first picture as being displayed/activated.
