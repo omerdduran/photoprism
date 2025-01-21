@@ -68,6 +68,7 @@ export default {
         wait: 5000,
         next: -1,
       },
+      isSafari: /^((?!chrome|android).)*safari/i.test(navigator.userAgent),
       debug,
       trace,
     };
@@ -246,6 +247,25 @@ export default {
       this.lightbox = lightbox;
       this.idleTimer = false;
       this.hasTouch = false;
+
+      // Add Safari-specific space key handler
+      if (this.isSafari) {
+        lightbox.on('bindEvents', () => {
+          lightbox.pswp.element.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.key === ' ') {
+              const video = lightbox.pswp?.currSlide?.content?.element;
+              if (video instanceof HTMLVideoElement) {
+                e.preventDefault();
+                if (video.paused) {
+                  this.playVideo(video, video.loop);
+                } else {
+                  this.pauseVideo(video);
+                }
+              }
+            }
+          });
+        });
+      }
 
       // Use dynamic caption plugin,
       // see https://github.com/dimsemenov/photoswipe-dynamic-caption-plugin.
