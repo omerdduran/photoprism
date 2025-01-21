@@ -102,7 +102,7 @@ export default {
         arrowPrev: true,
         arrowNext: true,
         loop: true,
-        zoom: true,
+        zoom: !this.models[this.index]?.Playable,
         close: true,
         counter: false,
         trapFocus: false,
