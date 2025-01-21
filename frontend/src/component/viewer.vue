@@ -382,7 +382,7 @@ export default {
           // Focus on video element to enable keyboard controls
           if (content.element instanceof HTMLVideoElement) {
             setTimeout(() => {
-              content.element.focus({preventScroll: true});
+              content.element.focus();
             }, 100);
           }
         }
