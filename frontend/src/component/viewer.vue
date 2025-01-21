@@ -379,8 +379,15 @@ export default {
             this.playVideo(content.element, content.data?.loop);
           }
           
-          // Focus on video element to enable keyboard controls
+          // Focus on video element to enable space key control
           if (content.element instanceof HTMLVideoElement) {
+            // Disable arrow key seeking on video element but allow PhotoSwipe navigation
+            content.element.addEventListener('keydown', (e) => {
+              if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                e.preventDefault(); // Only prevent default video seeking
+              }
+            });
+
             setTimeout(() => {
               content.element.focus();
             }, 100);
