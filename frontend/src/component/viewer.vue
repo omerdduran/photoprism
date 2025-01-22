@@ -2,6 +2,8 @@
   <div v-if="visible" ref="container" class="p-viewer" tabindex="-1" role="dialog">
     <div
       ref="lightbox"
+      tabindex="0"
+      @keydown.space.prevent="onSpaceKey"
       class="p-viewer__lightbox"
       :class="{
         'sidebar-visible': sidebarVisible,
@@ -248,25 +250,6 @@ export default {
       this.idleTimer = false;
       this.hasTouch = false;
 
-      // Add Safari-specific space key handler
-      if (this.isSafari) {
-        lightbox.on('bindEvents', () => {
-          lightbox.pswp.element.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' || e.key === ' ') {
-              const video = lightbox.pswp?.currSlide?.content?.element;
-              if (video instanceof HTMLVideoElement) {
-                e.preventDefault();
-                if (video.paused) {
-                  this.playVideo(video, video.loop);
-                } else {
-                  this.pauseVideo(video);
-                }
-              }
-            }
-          });
-        });
-      }
-
       // Use dynamic caption plugin,
       // see https://github.com/dimsemenov/photoswipe-dynamic-caption-plugin.
       this.captionPlugin = new PhotoSwipeDynamicCaption(lightbox, {
@@ -397,20 +380,6 @@ export default {
             firstPicture
           ) {
             this.playVideo(content.element, content.data?.loop);
-          }
-          
-          // Focus on video element to enable space key control
-          if (content.element instanceof HTMLVideoElement) {
-            // Disable arrow key seeking on video element but allow PhotoSwipe navigation
-            content.element.addEventListener('keydown', (e) => {
-              if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                e.preventDefault(); // Only prevent default video seeking
-              }
-            });
-
-            setTimeout(() => {
-              content.element.focus();
-            }, 100);
           }
         }
 
@@ -1206,6 +1175,19 @@ export default {
         pswp.currSlide.data.width = img.width;
         pswp.currSlide.data.height = img.height;
       };
+    },
+    onSpaceKey(event) {
+      const pswp = this.pswp();
+      if (!pswp?.currSlide?.content?.element) return;
+
+      const video = pswp.currSlide.content.element;
+      if (video instanceof HTMLVideoElement) {
+        if (video.paused) {
+          this.playVideo(video, video.loop);
+        } else {
+          this.pauseVideo(video);
+        }
+      }
     },
   },
 };
