@@ -18,8 +18,7 @@
             <v-expansion-panel-title class="d-flex justify-start align-center ga-3 text-body-2 px-4">
               <v-icon icon="mdi-link"></v-icon>
               <div
-                class="text-start action-url d-inline-flex"
-                style="user-select: none"
+                class="text-start not-selectable action-url d-inline-flex"
               >
                 /s/<strong v-if="link.Token" style="font-weight: 500">{{ link.getToken() }}</strong
                 ><span v-else>…</span>
@@ -42,7 +41,7 @@
                         autocapitalize="none"
                         autocomplete="off"
                         class="input-url"
-                        @click:append-inner="copyText(link.url())"
+                        @click:append-inner="$util.copyText(link.url())"
                       >
                       </v-text-field>
                     </v-col>
@@ -183,18 +182,6 @@ export default {
     },
   },
   methods: {
-    async copyText(text) {
-      if (!text) {
-        return;
-      }
-
-      try {
-        await Util.copyToMachineClipboard(text);
-        this.$notify.success(this.$gettext("Copied to clipboard"));
-      } catch (_) {
-        this.$notify.error(this.$gettext("Failed copying to clipboard"));
-      }
-    },
     expires(link) {
       let result = this.$gettext("Expires");
 
