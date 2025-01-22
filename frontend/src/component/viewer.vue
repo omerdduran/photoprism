@@ -70,7 +70,6 @@ export default {
         wait: 5000,
         next: -1,
       },
-      isSafari: /^((?!chrome|android).)*safari/i.test(navigator.userAgent),
       debug,
       trace,
     };
