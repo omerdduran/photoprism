@@ -29,7 +29,6 @@
                   :type="showPassword ? 'text' : 'password'"
                   :label="$gettext('Password')"
                   hide-details
-                  required
                   autofocus
                   autocorrect="off"
                   autocapitalize="none"
@@ -123,7 +122,6 @@
                   name="client_name"
                   type="text"
                   :label="$gettext('Name')"
-                  required
                   autofocus
                   hide-details
                   autocorrect="off"
@@ -235,12 +233,12 @@
         </template>
       </v-card>
     </v-form>
-    <p-confirm-dialog
+    <p-dialog-confirm
       :show="revoke.dialog"
       icon="mdi-delete-outline"
       @cancel="revoke.dialog = false"
       @confirm="onRevoked"
-    ></p-confirm-dialog>
+    ></p-dialog-confirm>
   </v-dialog>
 </template>
 <script>

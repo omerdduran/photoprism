@@ -1,5 +1,113 @@
-#photoprism button:focus {
-    outline: none;
+/* Form Layout and Controls */
+
+.p-form {
+    display: flex;
+    flex-wrap: nowrap;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 8px;
+}
+
+.p-page .p-form {
+    padding: 24px;
+}
+
+.v-dialog .p-tab .p-form {
+    padding: 8px;
+}
+
+.form-info {
+    gap: 0;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    align-items: stretch;
+    display: flex;
+}
+
+.form-disclaimer {
+    margin-top: 12px;
+}
+
+.form-body {
+    gap: 0;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    align-items: stretch;
+    display: flex;
+}
+
+.form-body .form-controls {
+    width: auto;
+    flex-grow: 1;
+}
+
+.form-body .form-controls .form-thumb > div {
+    position: relative;
+    min-height: 80px;
+    aspect-ratio: 1;
+}
+
+.form-body .form-controls .form-thumb > div > img {
+    border-radius: 4px;
+    overflow: hidden;
+    width: 100%;
+    height: auto;
+    max-height: 500px;
+    object-fit: contain;
+    z-index: -1;
+    border-style: none;
+}
+
+.form-actions {
+    padding: 0;
+}
+
+.form-actions {
+    padding-top: 8px;
+    padding-bottom: 16px;
+}
+
+.form-actions.form-actions--sticky {
+    padding: 8px;
+    background: linear-gradient(0deg, rgba(var(--v-theme-background), 1), rgba(var(--v-theme-background), 0.9), rgba(var(--v-theme-background), 0.8), rgba(var(--v-theme-background), 0));
+    background-size: 100%;
+    position: sticky;
+    bottom: 0;
+}
+
+.form-actions.form-actions--sticky .action-buttons {
+    margin-top: 8px;
+    margin-bottom: 16px;
+}
+
+.form-footer {
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+@media (max-width: 599px) {
+    .p-form.p-form--table {
+        padding: 0;
+    }
+
+    .p-form.p-form--table .form-body .form-controls .form-thumb {
+        display: none;
+    }
+
+    .p-form.p-form--table .form-body .form-controls .flex-column {
+        padding: 0;
+    }
+
+    .p-form.p-form--table .form-body .form-controls .v-table {
+        border-radius: 0;
+    }
+}
+
+/* Action Buttons */
+
+button:focus {
+    outline: none !important;
 }
 
 .action-buttons,
@@ -35,7 +143,7 @@
     margin: 20px auto 16px auto;
 }
 
-table td>.action-buttons {
+table td > .action-buttons {
     justify-content: start;
     align-items: center;
     flex-wrap: wrap;
@@ -45,17 +153,19 @@ table td>.action-buttons {
 }
 
 @media (max-width: 599px) {
-    .action-buttons>.v-btn,
-    .action-buttons>button {
+    .action-buttons > .v-btn,
+    .action-buttons > button {
         flex-grow: 1;
     }
 
-    table td>.action-buttons>.v-btn,
-    table td>.action-buttons>button {
+    table td > .action-buttons > .v-btn,
+    table td > .action-buttons > button {
         flex-grow: 0;
         min-width: 120px;
     }
 }
+
+/* Table Actions */
 
 table .table-actions {
     display: flex;
