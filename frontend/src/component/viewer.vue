@@ -3,7 +3,7 @@
     <div
       ref="lightbox"
       tabindex="0"
-      @keydown.space.prevent="onSpaceKey"
+      @keydown.space.prevent="onSpaceKeyDown"
       class="p-viewer__lightbox"
       :class="{
         'sidebar-visible': sidebarVisible,
@@ -1175,17 +1175,20 @@ export default {
         pswp.currSlide.data.height = img.height;
       };
     },
-    onSpaceKey(event) {
+    onSpaceKeyDown(event) {
+      // Get current PhotoSwipe instance and validate video element exists
       const pswp = this.pswp();
-      if (!pswp?.currSlide?.content?.element) return;
+      const videoElement = pswp?.currSlide?.content?.element;
+      
+      if (!(videoElement instanceof HTMLVideoElement)) {
+        return;
+      }
 
-      const video = pswp.currSlide.content.element;
-      if (video instanceof HTMLVideoElement) {
-        if (video.paused) {
-          this.playVideo(video, video.loop);
-        } else {
-          this.pauseVideo(video);
-        }
+      // Toggle video playback
+      if (videoElement.paused) {
+        this.playVideo(videoElement, videoElement.loop);
+      } else {
+        this.pauseVideo(videoElement);
       }
     },
   },
