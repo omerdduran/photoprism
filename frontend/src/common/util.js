@@ -549,25 +549,40 @@ export default class Util {
   static videoUrl(hash, codec) {
     if (codec) {
       let videoFormat = FormatAvc;
+      let mediaType = "video/mp4";
 
       if (canUseHevc && (codec === CodecHvc1 || codec === CodecHev1)) {
         videoFormat = FormatHevc;
+        mediaType = "video/mp4; codecs=\"hev1\"";
       } else if (canUseOGV && codec === CodecOGV) {
         videoFormat = CodecOGV;
+        mediaType = "video/ogg";
       } else if (canUseVP8 && codec === CodecVP8) {
         videoFormat = CodecVP8;
+        mediaType = "video/webm; codecs=\"vp8\"";
       } else if (canUseVP9 && codec === CodecVP9) {
         videoFormat = CodecVP9;
+        mediaType = "video/webm; codecs=\"vp9\"";
       } else if (canUseAv1 && (codec === CodecAv01 || codec === CodecAv1C)) {
         videoFormat = FormatAv1;
+        mediaType = "video/mp4; codecs=\"av01\"";
       } else if (canUseWebM && codec === FormatWebM) {
         videoFormat = FormatWebM;
+        mediaType = "video/webm";
+      } else {
+        mediaType = "video/mp4; codecs=\"avc1\"";
       }
 
-      return `${config.videoUri}/videos/${hash}/${config.previewToken}/${videoFormat}`;
+      return {
+        url: `${config.videoUri}/videos/${hash}/${config.previewToken}/${videoFormat}`,
+        type: mediaType,
+      };
     }
 
-    return `${config.videoUri}/videos/${hash}/${config.previewToken}/${FormatAvc}`;
+    return {
+      url: `${config.videoUri}/videos/${hash}/${config.previewToken}/${FormatAvc}`,
+      type: "video/mp4; codecs=\"avc1\"",
+    };
   }
 
   static async copyText(text) {

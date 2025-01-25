@@ -118,8 +118,19 @@
           >
             <div class="preview__overlay"></div>
             <div v-if="m.Type === 'live' || m.Type === 'animated'" class="live-player">
-              <video :id="'live-player-' + m.ID" width="500" height="500" preload="none" loop muted playsinline>
-                <source :src="m.videoUrl()" />
+              <video
+                :id="'live-player-' + m.ID"
+                width="500"
+                height="500"
+                preload="none"
+                loop
+                muted
+                playsinline
+              >
+                <source
+                  :src="Util.videoUrl(m.Hash, m.videoFile?.()?.Codec).url"
+                  :type="Util.videoUrl(m.Hash, m.videoFile?.()?.Codec).type"
+                />
               </video>
             </div>
 
@@ -314,6 +325,7 @@ import Notify from "common/notify";
 import { Input, InputInvalid, ClickShort, ClickLong } from "common/input";
 import { virtualizationTools } from "common/virtualization-tools";
 import IconLivePhoto from "component/icon/live-photo.vue";
+import Util from "common/util";
 
 export default {
   name: "PPhotoCards",
@@ -377,6 +389,7 @@ export default {
       firstVisibleElementIndex: 0,
       lastVisibleElementIndex: 0,
       visibleElementIndices: new Set(),
+      Util
     };
   },
   watch: {

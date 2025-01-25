@@ -586,7 +586,8 @@ export default {
               of concept to see if/how it works).
        */
       const source = document.createElement("source");
-      source.src = videoSrc;
+      source.src = videoSrc.url;
+      source.type = videoSrc.type;
       video.appendChild(source);
 
       // Return HTMLMediaElement.
